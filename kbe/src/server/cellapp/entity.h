@@ -1,22 +1,4 @@
-/*
-This source file is part of KBEngine
-For the latest info, see http://www.kbengine.org/
-
-Copyright (c) 2008-2018 KBEngine.
-
-KBEngine is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-KBEngine is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
- 
-You should have received a copy of the GNU Lesser General Public License
-along with KBEngine.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// Copyright 2008-2018 Yolo Technologies, Inc. All Rights Reserved. https://www.comblockengine.com
 
 #ifndef KBE_ENTITY_H
 #define KBE_ENTITY_H
@@ -49,7 +31,7 @@ class CoordinateSystem;
 class EntityCoordinateNode;
 class Controller;
 class Controllers;
-class Space;
+class SpaceMemory;
 class VolatileInfo;
 
 namespace Network
@@ -68,7 +50,8 @@ class Entity : public script::ScriptObject
 	ENTITY_HEADER(Entity)
 
 public:
-	Entity(ENTITY_ID id, const ScriptDefModule* pScriptModule);
+	Entity(ENTITY_ID id, const ScriptDefModule* pScriptModule,
+		PyTypeObject* pyType = getScriptType(), bool isInitialised = true);
 	~Entity();
 	
 	/** 
@@ -252,8 +235,8 @@ public:
 	/**
 		进入离开space等回调
 	*/
-	void onEnterSpace(Space* pSpace);
-	void onLeaveSpace(Space* pSpace);
+	void onEnterSpace(SpaceMemory* pSpace);
+	void onLeaveSpace(SpaceMemory* pSpace);
 
 	/** 
 		当cellapp意外终止后， baseapp如果能找到合适的cellapp则将其恢复后
@@ -329,9 +312,9 @@ public:
 		entity移动到某个entity 
 	*/
 	uint32 moveToEntity(ENTITY_ID targetID, float velocity, float distance,
-			PyObject* userData, bool faceMovement, bool moveVertically);
+			PyObject* userData, bool faceMovement, bool moveVertically, const Position3D& offsetPos);
 	
-	DECLARE_PY_MOTHOD_ARG6(pyMoveToEntity, int32, float, float, PyObject_ptr, int32, int32);
+	static PyObject* __py_pyMoveToEntity(PyObject* self, PyObject* args);
 
 	/**
 	entity移动加速
@@ -590,7 +573,7 @@ public:
 	/** 
 		设置实体持久化数据是否已脏，脏了会自动存档 
 	*/
-	INLINE void setDirty(bool dirty = true);
+	INLINE void setDirty(uint32* digest = NULL);
 	INLINE bool isDirty() const;
 	
 	/**
@@ -698,8 +681,8 @@ protected:
 	// 在脚本层做搜索的时候可以按层搜索.
 	int8													layer_;
 	
-	// 需要持久化的数据是否变脏，如果没有变脏不需要持久化
-	bool													isDirty_;
+	// 需要持久化的数据是否变脏（内存sha1），如果没有变脏不需要持久化
+	uint32													persistentDigest_[5];
 
 	// 如果用户有设置过Volatileinfo，则此处创建Volatileinfo，否则为NULL使用ScriptDefModule的Volatileinfo
 	VolatileInfo*											pCustomVolatileinfo_;

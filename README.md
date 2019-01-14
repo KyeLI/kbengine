@@ -22,6 +22,7 @@ KBEngine
 	UE4		: https://github.com/kbengine/kbengine_ue4_demo/releases/latest
 	Ogre		: https://github.com/kbengine/kbengine_ogre_demo/releases/latest
 	Cocos2d_js	: https://github.com/kbengine/kbengine_cocos2d_js_demo/releases/latest
+	Godot Engine	: https://github.com/krogank9/kbe_godot_demo/releases/latest
 
 
 ## Docs
@@ -37,10 +38,12 @@ KBEngine
 	BBS		: http://bbs.kbengine.org
 	Maillist	: https://groups.google.com/d/forum/kbengine_maillist
 
+
 ## Stresstest
 
 	https://www.youtube.com/watch?v=sWtk3CfxyGY
 	http://v.youku.com/v_show/id_XMjgyMjM0MTYwNA==.html?spm=a2h3j.8428770.3416059.1
+
 
 ## What is KBEngine?
 
@@ -58,14 +61,18 @@ KBEngine
 	The upper limit of the capacity of a single machine depends on the complexity of the game logic itself.)
 
 
-## Acknowledgements(alphabetical)
+## Create a new game asset library
 
-	acatadog, colin
+	Execute:
+		new_assets.bat
+
+	Output:
+		server_assets
 
 
 ## 中文
 
-[官网](http://kbengine.org/cn)，[论坛](http://bbs.kbengine.org)，QQ交流群：461368412、16535321
+[官网](http://kbengine.org/cn)，[论坛](http://bbs.kbengine.org)，QQ交流群：716679842、367555003、461368412、16535321
 
 
 ## 什么是KBEngine?

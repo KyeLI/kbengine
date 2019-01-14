@@ -1,22 +1,4 @@
-/*
-This source file is part of KBEngine
-For the latest info, see http://www.kbengine.org/
-
-Copyright (c) 2008-2018 KBEngine.
-
-KBEngine is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-KBEngine is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
- 
-You should have received a copy of the GNU Lesser General Public License
-along with KBEngine.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// Copyright 2008-2018 Yolo Technologies, Inc. All Rights Reserved. https://www.comblockengine.com
 
 
 #include "script.h"
@@ -26,7 +8,9 @@ along with KBEngine.  If not, see <http://www.gnu.org/licenses/>.
 #include "copy.h"
 #include "pystruct.h"
 #include "py_gc.h"
-#include "install_py_dlls.h"
+#include "pyurl.h"
+#include "py_compression.h"
+#include "py_platform.h"
 #include "resmgr/resmgr.h"
 #include "thread/concurrency.h"
 
@@ -193,6 +177,7 @@ bool Script::install(const wchar_t* pythonHomeDir, std::wstring pyPaths,
         return false;
     } 
 
+	PySys_SetArgvEx(0, NULL, 0);
 	PyObject *m = PyImport_AddModule("__main__");
 
 	// 添加一个脚本基础模块
@@ -210,12 +195,6 @@ bool Script::install(const wchar_t* pythonHomeDir, std::wstring pyPaths,
 	
 	// 注册产生uuid方法到py
 	APPEND_SCRIPT_MODULE_METHOD(module_,		genUUID64,			__py_genUUID64,					METH_VARARGS,			0);
-
-	if(!install_py_dlls())
-	{
-		ERROR_MSG("Script::install(): install_py_dlls() is failed!\n");
-		return false;
-	}
 
 	// 安装py重定向模块
 	ScriptStdOut::installScript(NULL);
@@ -255,6 +234,9 @@ bool Script::install(const wchar_t* pythonHomeDir, std::wstring pyPaths,
 	PyProfile::initialize(this);
 	PyStruct::initialize();
 	Copy::initialize();
+	PyUrl::initialize(this);
+	PyCompression::initialize();
+	PyPlatform::initialize();
 	SCRIPT_ERROR_CHECK();
 
 	math::installModule("Math");
@@ -270,6 +252,9 @@ bool Script::uninstall()
 	PyProfile::finalise();
 	PyStruct::finalise();
 	Copy::finalise();
+	PyUrl::finalise();
+	PyCompression::finalise();
+	PyPlatform::finalise();
 	SCRIPT_ERROR_CHECK();
 
 	if(pyStdouterr_)
@@ -283,12 +268,6 @@ bool Script::uninstall()
 
 	ScriptStdOut::uninstallScript();
 	ScriptStdErr::uninstallScript();
-
-	if(!uninstall_py_dlls())
-	{
-		ERROR_MSG("Script::uninstall(): uninstall_py_dlls() is failed!\n");
-		return false;
-	}
 
 	PyGC::initialize();
 
@@ -307,11 +286,6 @@ bool Script::installExtraModule(const char* moduleName)
 	// 添加一个脚本扩展模块
 	extraModule_ = PyImport_AddModule(moduleName);
 	if (extraModule_ == NULL)
-		return false;
-	
-	// 初始化扩展模块
-	PyObject *module = PyImport_AddModule(moduleName);
-	if (module == NULL)
 		return false;
 
 	// 将扩展模块对象加入main

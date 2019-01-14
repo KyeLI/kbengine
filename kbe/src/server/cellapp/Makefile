@@ -23,7 +23,8 @@ SRCS =						\
 	loadnavmesh_threadtasks	\
 	main					\
 	space					\
-	spaces					\
+	spacememory				\
+	spacememorys			\
 	space_viewer			\
 	move_controller			\
 	moveto_entity_handler	\
@@ -61,7 +62,6 @@ USE_PYTHON = 1
 USE_G3DMATH = 1
 USE_OPENSSL = 1
 USE_TMXPARSER = 1
-USE_ZIP = 1
 
 ifndef NO_USE_LOG4CXX
 	NO_USE_LOG4CXX = 0

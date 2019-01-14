@@ -1,22 +1,4 @@
-/*
-This source file is part of KBEngine
-For the latest info, see http://www.kbengine.org/
-
-Copyright (c) 2008-2018 KBEngine.
-
-KBEngine is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-KBEngine is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
- 
-You should have received a copy of the GNU Lesser General Public License
-along with KBEngine.  If not, see <http://www.gnu.org/licenses/>.
-*/
+// Copyright 2008-2018 Yolo Technologies, Inc. All Rights Reserved. https://www.comblockengine.com
 
 
 #include "entity_call.h"
@@ -82,9 +64,7 @@ RemoteEntityMethod* EntityComponentCall::createRemoteMethod(MethodDescription* p
 //-------------------------------------------------------------------------------------
 PyObject* EntityComponentCall::onScriptGetAttribute(PyObject* attr)
 {
-	wchar_t* PyUnicode_AsWideCharStringRet0 = PyUnicode_AsWideCharString(attr, NULL);
-	char* ccattr = strutil::wchar2char(PyUnicode_AsWideCharStringRet0);
-	PyMem_Free(PyUnicode_AsWideCharStringRet0);
+	const char* ccattr = PyUnicode_AsUTF8AndSize(attr, NULL);
 
 	MethodDescription* pMethodDescription = NULL;
 	ScriptDefModule* pScriptDefModule = pComponentScriptDefModule();
@@ -118,8 +98,6 @@ PyObject* EntityComponentCall::onScriptGetAttribute(PyObject* attr)
 	
 	if(pMethodDescription != NULL)
 	{
-		free(ccattr);
-
 		if(g_componentType == CLIENT_TYPE || g_componentType == BOTS_TYPE)
 		{
 			if(!pMethodDescription->isExposed())
@@ -129,7 +107,6 @@ PyObject* EntityComponentCall::onScriptGetAttribute(PyObject* attr)
 		return createRemoteMethod(pMethodDescription);
 	}
 	
-	free(ccattr);
 	return ScriptObject::onScriptGetAttribute(attr);
 }
 
@@ -196,6 +173,49 @@ void EntityComponentCall::newCall(Network::Bundle& bundle)
 		bundle << pComponentPropertyDescription_->aliasIDAsUint8();
 	else
 		bundle << pComponentPropertyDescription_->getUType();
+}
+
+//-------------------------------------------------------------------------------------
+std::vector<EntityComponentCall*> EntityComponentCall::getComponents(const std::string& name, EntityCall* pEntityCall, ScriptDefModule* pEntityScriptDescrs)
+{
+	std::vector<EntityComponentCall*> founds;
+
+	ScriptDefModule::COMPONENTDESCRIPTION_MAP& componentDescrs = pEntityScriptDescrs->getComponentDescrs();
+
+	ScriptDefModule::COMPONENTDESCRIPTION_MAP::iterator comps_iter = componentDescrs.begin();
+	for (; comps_iter != componentDescrs.end(); ++comps_iter)
+	{
+		if (name != comps_iter->second->getName())
+			continue;
+
+		if (pEntityCall->isBase())
+		{
+			if (!comps_iter->second->hasBase())
+				continue;
+		}
+		else if (pEntityCall->isCell())
+		{
+			if (!comps_iter->second->hasCell())
+				continue;
+		}
+		else
+		{
+			if (!comps_iter->second->hasClient())
+				continue;
+		}
+
+		PyObject* pyObj = PyObject_GetAttrString(pEntityCall, comps_iter->first.c_str());
+		if (pyObj)
+		{
+			founds.push_back((EntityComponentCall*)pyObj);
+		}
+		else
+		{
+			SCRIPT_ERROR_CHECK();
+		}
+	}
+
+	return founds;
 }
 
 //-------------------------------------------------------------------------------------
